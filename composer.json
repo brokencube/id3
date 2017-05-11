@@ -1,0 +1,21 @@
+{
+    "name": "brokencube/id3",
+    "description": "ID3 library",
+    "type": "library",
+    "keywords": ["MP3", "ID3"],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Chris Birch",
+            "email": "chris.birch@musicgateway.net",
+            "homepage": "https://www.musicgateway.net",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": ">=5.3",
+    },
+    "autoload": {    
+        "psr-4": { "brokencube\\ID3\\": "src/" }
+    }
+}
