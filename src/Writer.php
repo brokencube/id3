@@ -15,13 +15,13 @@ class Writer
         $this->data = $data;
     }
     
-    public function addTag($tagname, $data, $lang, $extended)
+    public function addTag($tagname, $data, $lang = null, $extended = null)
     {
         $this->data[] = [
             'title' => $tagname,
             'desc' => $data,
-            'lang' => $lang ?: null,
-            'tag' => $extended ?: null
+            'lang' => $lang,
+            'tag' => $extended
         ];
     }
 
@@ -62,31 +62,24 @@ class Writer
 
     protected function generateTotalSizePacked($size)
     {
-        $byte[3] = $size & 0x7F;
-        $byte[2] = ($size >> 7) & 0x7F;
-        $byte[1] = ($size >> 14) & 0x7F;
-        $byte[0] = ($size >> 21) & 0x7F;
-
-        $fields = [
-            ['C', $byte[0]],
-            ['C', $byte[1]],
-            ['C', $byte[2]],
-            ['C', $byte[3]],
-        ];
-
-        return $this->packFields($fields);
+        return $this->packFields([
+            ['C', ($size >> 21) & 0b01111111],
+            ['C', ($size >> 14) & 0b01111111],
+            ['C', ($size >> 7)  & 0b01111111],
+            ['C',  $size        & 0b01111111],
+        ]);
     }
 
 
     protected function topHeader($size)
     {
         $header = [
-            ['N', 0x49443303],              // 4 ID3 Text and the Version is the last set
-            ['a'],                          // 1 Minor version 0 (NUL)
+            ['C', 0x03],                    // 4 ID3v2 minor version (3)
+            ['C', 0x00],                    // 1 Minor version 0 (NUL)
             ['C', 0x00],                    // 1 Flags
         ];
 
-        return $this->packFields($header) . $this->generateTotalSizePacked($size);
+        return 'ID3' . $this->packFields($header) . $this->generateTotalSizePacked($size);
     }
 
     protected function tagName($title)
