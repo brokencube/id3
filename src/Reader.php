@@ -139,8 +139,8 @@ class Reader
 
                 case $tagName == "TXXX":
                     $tagEncoding = ord(substr($data, 0, 1));
-                    $data = $this->trimNulls(substr($data, 1));
-                    $tagDataExtra = $this->trimNulls(substr($data, 0, strpos($data, chr(0))));
+                    $data = $this->trimNull(substr($data, 1));
+                    $tagDataExtra = $this->trimNull(substr($data, 0, strpos($data, chr(0))));
                     $tagData = substr($data, strpos($data, chr(0)));
                     $tagData = $this->decodeText($tagData, $textEncoding);
                     break;
@@ -148,7 +148,7 @@ class Reader
                 case $tagName == "COMM":
                     // Remove the text encoding byte
                     $tagEncoding = ord(substr($data, 0, 1));
-                    $tagLang =  $this->trimNulls(substr($data, 1, 3));
+                    $tagLang =  $this->trimNull(substr($data, 1, 3));
                     $tagData = $this->decodeText(substr($data, 4), $textEncoding);
                     break;
                 
@@ -219,8 +219,8 @@ class Reader
 
                 case $tagName == "TXXX":
                     $tagEncoding = ord(substr($data, 0, 1));
-                    $data = $this->trimNulls(substr($data, 1));
-                    $tagDataExtra = $this->trimNulls(substr($data, 0, strpos($data, chr(0))));
+                    $data = $this->trimNull(substr($data, 1));
+                    $tagDataExtra = $this->trimNull(substr($data, 0, strpos($data, chr(0))));
                     $tagData = substr($data, strpos($data, chr(0)));
                     $tagData = $this->decodeText($tagData, $textEncoding);
                     break;
@@ -228,7 +228,7 @@ class Reader
                 case $tagName == "COMM":
                     // Remove the text encoding byte
                     $tagEncoding = ord(substr($data, 0, 1));
-                    $tagLang =  $this->trimNulls(substr($data, 1, 3));
+                    $tagLang =  $this->trimNull(substr($data, 1, 3));
                     $tagData = $this->decodeText(substr($data, 4), $textEncoding);
                     break;
                 
@@ -261,7 +261,7 @@ class Reader
         if ($encoding == 1 or $encoding == 2) {
             $data = mb_convert_encoding($data, 'UTF-8' , 'UTF-16');
         }
-        return $this->trimNulls($data);
+        return $this->trimNull($data);
     }
 
     protected function imageData($data)
@@ -371,7 +371,7 @@ class Reader
         return $frameArr;
     }
     
-    public function trimNulls($data)
+    public function trimNull($data)
     {
         return trim($data, chr(0));
     }
