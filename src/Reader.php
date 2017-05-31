@@ -1,5 +1,5 @@
 <?php
-namespace classes;
+namespace brokencube\ID3;
 
 class Reader
 {
@@ -36,9 +36,7 @@ class Reader
         $pointer = 10;
         
         $mainFlags = substr($mainHeader, 5, 1);
-        if ($mainFlags & 0x80) {
-            $unsync = true;
-        }
+        $unsync = $mainFlags & 0x80;
         
         switch ($versionNumber) {
             case 2:
@@ -69,7 +67,7 @@ class Reader
             }
 
             if ($frameFormat['unsync'] || $unsync) {
-                $data = $this->stringReplace($data);
+                $data = $this->unsynchroniseString($data);
             }
 
             // Trim any nul chars off the data
@@ -111,24 +109,24 @@ class Reader
             $tagStatusFlags = fread($this->fp, 1);
             $tagFormatFlags = fread($this->fp, 1);
             list(,$tagDataSize) = unpack('N', $tagRawSize);
-            $data = fread($this->fp, $tagDataSize);
             
             // Have we hit the end padding?
             if (bin2hex($tagName) === '00000000') {
                 return $tags;
             }
             
+            $data = $tagDataSize ? fread($this->fp, $tagDataSize) : '';
+            
             // Decode Flags
-            $statusFormat = $this->version3FrameStatus($tagStatusFlags);
-            $frameFormat = $this->version3FrameFormat($tagFormatFlags);
+            $frameFlags = $this->version3Frame($tagStatusFlags, $tagFormatFlags);
             
             // If we have a secondary 32bit length, strip it.
-            if ($frameFormat['length'] == true){
+            if ($frameFlags['length'] == true){
                 $data = substr($data, 4);
             }
 
-            if ($frameFormat['unsync'] || $unsync) {
-                $data = $this->stringReplace($data);
+            if ($frameFlags['unsync'] || $unsync) {
+                $data = $this->unsynchroniseString($data);
             }
             
             // Special Decoding for specific tags
@@ -191,24 +189,25 @@ class Reader
             $tagStatusFlags = fread($this->fp, 1);
             $tagFormatFlags = fread($this->fp, 1);
             $tagDataSize = $this->unpackSyncSafeInteger($tagRawSize);
-            $data = fread($this->fp, $tagDataSize);
             
             // Have we hit the end padding?
             if (bin2hex($tagName) === '00000000') {
                 return $tags;
             }
+
+            $data = $tagDataSize ? fread($this->fp, $tagDataSize) : '';
+            
             
             // Decode Flags
-            $statusFormat = $this->version4FrameStatus($tagStatusFlags);
-            $frameFormat = $this->version4FrameFormat($tagFormatFlags);
+            $frameFlags = $this->version4Frame($tagStatusFlags, $tagFormatFlags);
             
             // If we have a secondary 32bit length, strip it.
-            if ($frameFormat['length'] == true){
+            if ($frameFlags['length'] == true){
                 $data = substr($data, 4);
             }
             
-            if ($frameFormat['unsync'] || $unsync) {
-                $data = $this->stringReplace($data);
+            if ($frameFlags['unsync'] || $unsync) {
+                $data = $this->unsynchroniseString($data);
             }
             
             // Special Decoding for specific tags
@@ -222,20 +221,20 @@ class Reader
                     $data = $this->trimNull(substr($data, 1));
                     $tagDataExtra = $this->trimNull(substr($data, 0, strpos($data, chr(0))));
                     $tagData = substr($data, strpos($data, chr(0)));
-                    $tagData = $this->decodeText($tagData, $textEncoding);
+                    $tagData = $this->decodeText($tagData, $tagEncoding);
                     break;
                 
                 case $tagName == "COMM":
                     // Remove the text encoding byte
                     $tagEncoding = ord(substr($data, 0, 1));
                     $tagLang =  $this->trimNull(substr($data, 1, 3));
-                    $tagData = $this->decodeText(substr($data, 4), $textEncoding);
+                    $tagData = $this->decodeText(substr($data, 4), $tagEncoding);
                     break;
                 
                 case substr($tagName, 0, 1) == 'T':
                 case substr($tagName, 0, 1) == 'W':
                     $tagEncoding = ord(substr($data, 0, 1));
-                    $tagData = $this->decodeText(substr($data, 1), $textEncoding);
+                    $tagData = $this->decodeText(substr($data, 1), $tagEncoding);
                     break;
                 
                 default:
@@ -283,92 +282,39 @@ class Reader
 
     }
 
-    protected function stringReplace($string)
+    protected function unsynchroniseString($string)
     {
         return str_replace(chr(255) . chr(0), chr(255), $string);
     }
 
-    protected function version3FrameFormat($frameFormat)
+    protected function version3Frame($frameStatus, $frameFormat)
     {
-        
-        if (bin2hex($frameFormat) & 0x01) {
-            $frameArr['compression'] = true;               
-        }
-        // if Unsynchronisation is set then remove the next 4 bytes    
-        if (bin2hex($frameFormat) & 0x02) {
-            $frameArr['encrypt'] = true;
-        }
-
-        if (bin2hex($frameFormat) & 0x04) {
-            $frameArr['grouping'] = true;
-        }
-
-        return $frameArr;
-
+        return [
+            'tag' =>         bin2hex($frameStatus) & 0b10000000,
+            'file' =>        bin2hex($frameStatus) & 0b01000000,
+            'read-only' =>   bin2hex($frameStatus) & 0b00100000,
+            
+            'grouping' =>    bin2hex($frameFormat) & 0b00100000,
+            'compression' => bin2hex($frameFormat) & 0b10000000,
+            'encrypt' =>     bin2hex($frameFormat) & 0b01000000,
+            'unsync' => false,
+            'length' => false,
+        ];
     }
     
-    protected function version3FrameStatus($frameFormat)
+    protected function version4Frame($frameStatus, $frameFormat)
     {
-        
-        if (bin2hex($frameFormat) & 0x01) {
-            $frameArr['tag'] = true;               
-        }
-        // if Unsynchronisation is set then remove the next 4 bytes    
-        if (bin2hex($frameFormat) & 0x02) {
-            $frameArr['file'] = true;
-        }
-
-        if (bin2hex($frameFormat) & 0x04) {
-            $frameArr['read-only'] = true;
-        }
-
-        return $frameArr;
-
-    }
-
-    protected function version4FrameFormat($frameFormat)
-    {
-        
-        if (bin2hex($frameFormat) & 0x01) {
-            $frameArr['length'] = true;               
-        }
-        // if Unsynchronisation is set then remove the next 4 bytes    
-        if (bin2hex($frameFormat) & 0x02) {
-            $frameArr['unsync'] = true;
-        }
-
-        if (bin2hex($frameFormat) & 0x04) {
-            $frameArr['encrypt'] = true;
-        }
-
-        if (bin2hex($frameFormat) & 0x08) {
-            $frameArr['compression'] = true;
-        }
-
-        if (bin2hex($frameFormat) & 0x64) {
-            $frameArr['grouping'] = true;
-        }
-
-        return $frameArr;
-
-    }
-
-    protected function version4FrameStatus($frameFormat)
-    {
-        
-        if (bin2hex($frameFormat) & 0x01) {
-            $frameArr['tag'] = true;               
-        }
-        // if Unsynchronisation is set then remove the next 4 bytes    
-        if (bin2hex($frameFormat) & 0x02) {
-            $frameArr['file'] = true;
-        }
-
-        if (bin2hex($frameFormat) & 0x04) {
-            $frameArr['read-only'] = true;
-        }
-
-        return $frameArr;
+        return [
+            'tag' =>         bin2hex($frameStatus) & 0b01000000,
+            'file' =>        bin2hex($frameStatus) & 0b00100000,
+            'read-only' =>   bin2hex($frameStatus) & 0b00010000,
+            
+            'grouping' =>    bin2hex($frameFormat) & 0b01000000,
+            'compression' => bin2hex($frameFormat) & 0b00001000,
+            'encrypt' =>     bin2hex($frameFormat) & 0b00000100,
+            'unsync' =>      bin2hex($frameFormat) & 0b00000010,
+            'length' =>      bin2hex($frameFormat) & 0b00000001,
+        ];
     }
     
     public function trimNull($data)
