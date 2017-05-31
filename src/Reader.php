@@ -53,6 +53,10 @@ class Reader
     public function decodeV2($length, $pointer = 10, $unsync)
     {
         do {
+            $tagEncoding = null;
+            $tagDataExtra = null;
+            $tagLang = null;
+            
             fseek($this->fp, $pointer);
             
             // Read data for next tag
@@ -74,18 +78,40 @@ class Reader
             $data = $this->trimNull($data);
             
             // Do special things for the Com tag
-            if ($tagName == "COM") {
-                $tagData = trim(substr($data, 3), chr(0));
-                $tagLang = substr($data, 0, 3);
-            } else {
-                $tagData = $data;
-                $tagLang = null;
+            switch (true) {
+                case $tagName == "COM":
+                    $tagEncoding = ord(substr($data, 0, 1));
+                    $tagLang = substr($data, 1, 3);
+                    $data = $this->trimNull(substr($data, 4));
+                    $tagDataExtra = $this->trimNull(substr($data, 0, strpos($data, chr(0))));
+                    $tagData = substr($data, strpos($data, chr(0)));
+                    $tagData = $this->decodeText($tagData, $tagEncoding);
+                    break;
+                
+                case substr($tagName, 0, 1) == 'T':
+                    $tagEncoding = ord(substr($data, 0, 1));
+                    $tagData = $this->decodeText(substr($data, 1), $tagEncoding);
+                    break;
+                
+                case $tagName == "TXX":
+                    $tagEncoding = ord(substr($data, 0, 1));
+                    $data = $this->trimNull(substr($data, 1));
+                    $tagDataExtra = $this->trimNull(substr($data, 0, strpos($data, chr(0))));
+                    $tagData = substr($data, strpos($data, chr(0)));
+                    $tagData = $this->decodeText($tagData, $tagEncoding);
+                    break;
+                
+                default:
+                    $tagData = $data;
+                    $tagLang = null;
+                    break;
             }
 
             $tags[] = [
                 'tagName' => $tagName,
                 'tagData' => $tagData,
                 'tagLang' => $tagLang,
+                'tagDataExtra' => $tagDataExtra                
             ];
             
             $pointer += (6 + $tagDataSize);
@@ -140,20 +166,20 @@ class Reader
                     $data = $this->trimNull(substr($data, 1));
                     $tagDataExtra = $this->trimNull(substr($data, 0, strpos($data, chr(0))));
                     $tagData = substr($data, strpos($data, chr(0)));
-                    $tagData = $this->decodeText($tagData, $textEncoding);
+                    $tagData = $this->decodeText($tagData, $tagEncoding);
                     break;
                 
                 case $tagName == "COMM":
                     // Remove the text encoding byte
                     $tagEncoding = ord(substr($data, 0, 1));
                     $tagLang =  $this->trimNull(substr($data, 1, 3));
-                    $tagData = $this->decodeText(substr($data, 4), $textEncoding);
+                    $tagData = $this->decodeText(substr($data, 4), $tagEncoding);
                     break;
                 
                 case substr($tagName, 0, 1) == 'T':
                 case substr($tagName, 0, 1) == 'W':
                     $tagEncoding = ord(substr($data, 0, 1));
-                    $tagData = $this->decodeText(substr($data, 1), $textEncoding);
+                    $tagData = $this->decodeText(substr($data, 1), $tagEncoding);
                     break;
                 
                 default:
