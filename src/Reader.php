@@ -59,14 +59,14 @@ class Reader
             $tagName = fread($this->fp, 3);
             $tagRawSize = fread($this->fp, 3);
             list(,$tagDataSize) = unpack('N', chr(0) . $tagRawSize);
-            $data = fread($this->fp, $tagDataSize);
+            $data = $tagDataSize ? fread($this->fp, $tagDataSize) : '';
             
             // Have we hit the end padding?
             if (bin2hex($tagName) === '000000') {
                 return $tags;
             }
 
-            if ($frameFormat['unsync'] || $unsync) {
+            if ($unsync) {
                 $data = $this->unsynchroniseString($data);
             }
 
