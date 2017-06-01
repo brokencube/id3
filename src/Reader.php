@@ -52,6 +52,7 @@ class Reader
     
     public function decodeV2($length, $pointer = 10, $unsync)
     {
+        $tags = [];
         do {
             $tagEncoding = null;
             $tagDataExtra = null;
@@ -122,6 +123,7 @@ class Reader
         
     public function decodeV3($length, $pointer, $unsync)
     {
+        $tags = [];
         do {
             $tagEncoding = null;
             $tagDataExtra = null;
@@ -202,6 +204,7 @@ class Reader
     
     public function decodeV4($length, $pointer, $unsync)
     {
+        $tags = [];
         do {
             $tagEncoding = null;
             $tagDataExtra = null;
