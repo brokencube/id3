@@ -306,7 +306,7 @@ class Reader
         $descPosition = stripos($description, null);
         $image['description'] = substr($description, $position, $descPosition);
         $image['image'] = $this->trimNull(substr($description, $descPosition));
-        echo "<img src='data:image/jpeg;base64,".base64_encode($image['image'])."'/>";
+        #echo "<img src='data:image/jpeg;base64,".base64_encode($image['image'])."'/>";
         return $image;
 
     }
