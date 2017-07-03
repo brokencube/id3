@@ -66,6 +66,11 @@ class Reader
             list(,$tagDataSize) = unpack('N', chr(0) . $tagRawSize);
             $data = $tagDataSize ? fread($this->fp, $tagDataSize) : '';
             
+            // If we somehow end up with a dead resource (or stream past the end of the file etc.)
+            if ($tagName === false) {
+                return $tags;
+            }
+            
             // Have we hit the end padding?
             if (bin2hex($tagName) === '000000') {
                 return $tags;
@@ -137,6 +142,11 @@ class Reader
             $tagStatusFlags = fread($this->fp, 1);
             $tagFormatFlags = fread($this->fp, 1);
             list(,$tagDataSize) = unpack('N', $tagRawSize);
+            
+            // If we somehow end up with a dead resource (or stream past the end of the file etc.)
+            if ($tagName === false) {
+                return $tags;
+            }
             
             // Have we hit the end padding?
             if (bin2hex($tagName) === '00000000') {
@@ -218,6 +228,11 @@ class Reader
             $tagStatusFlags = fread($this->fp, 1);
             $tagFormatFlags = fread($this->fp, 1);
             $tagDataSize = $this->unpackSyncSafeInteger($tagRawSize);
+            
+            // If we somehow end up with a dead resource (or stream past the end of the file etc.)
+            if ($tagName === false) {
+                return $tags;
+            }
             
             // Have we hit the end padding?
             if (bin2hex($tagName) === '00000000') {
