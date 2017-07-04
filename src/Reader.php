@@ -31,7 +31,7 @@ class Reader
         
         $mainHeader = fread($this->fp, 10);
         // Check we have the expected magic string
-        if (substr($mainHeader(0,3) != 'ID3')) {
+        if (substr($mainHeader,0,3) != 'ID3') {
             return [];
         }
         
