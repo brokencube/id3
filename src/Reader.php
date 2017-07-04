@@ -28,10 +28,20 @@ class Reader
     public function view()
     {
         $this->fp = fopen($this->filename,'r');
-
+        
         $mainHeader = fread($this->fp, 10);
+        // Check we have the expected magic string
+        if (substr($mainHeader(0,3) != 'ID3')) {
+            return [];
+        }
+        
         $mainHeaderLength = $this->unpackSyncSafeInteger(substr($mainHeader, 6, 4));
-
+        
+        // Sanity check - if the decoded length value is larger than the file, we must be looking at junk data, bail out.
+        if ($mainHeaderLength > filesize($this->filename)) {
+            return [];
+        }
+        
         $versionNumber = ord(substr($mainHeader, 3, 1));
         $pointer = 10;
         
