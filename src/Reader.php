@@ -46,7 +46,14 @@ class Reader
         $pointer = 10;
         
         $mainFlags = substr($mainHeader, 5, 1);
-        $unsync = $mainFlags & 0x80;
+        $unsync = ord($mainFlags) & 0x80;
+        
+        if ($unsync) {
+            $data = fread($this->fp, $mainHeaderLength * 1.05);
+            fclose($this->fp);
+            $this->fp = fopen('php://temp/maxmemory:'. (4*1024), 'w+');
+            fwrite($this->fp, $mainHeader . $this->unsynchroniseString($data));
+        }
         
         switch ($versionNumber) {
             case 2:
