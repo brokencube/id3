@@ -41,6 +41,10 @@ class Reader
         if ($mainHeaderLength > filesize($this->filename)) {
             return [];
         }
+
+        if ($mainHeaderLength < 10) {
+            return [];
+        }
         
         $versionNumber = ord(substr($mainHeader, 3, 1));
         $pointer = 10;
