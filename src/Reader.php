@@ -101,9 +101,6 @@ class Reader
                 $data = $this->unsynchroniseString($data);
             }
 
-            // Trim any nul chars off the data
-            $data = $this->trimNull($data);
-            
             // Do special things for the Com tag
             switch (true) {
                 case $tagName == "COM":
@@ -322,6 +319,9 @@ class Reader
     
     public function decodeText($data, $encoding)
     {
+        if ($encoding == 0) {
+            $data = utf8_encode($data);
+        }
         if ($encoding == 1 or $encoding == 2) {
             $data = mb_convert_encoding($data, 'UTF-8' , 'UTF-16');
         }
