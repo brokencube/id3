@@ -51,14 +51,14 @@ class Writer
         
         switch ($tagtype) {
             case 'txt':
-                $text = chr(1) . ($lang ? $lang . chr(0) : '') . ($extendedTagName ? $extendedTagName . chr(0) : '') . "\xFF\xFE" . mb_convert_encoding($text,"UTF-16LE","UTF-8") . chr(0);
+                $text = chr(1) . ($lang ? $lang . chr(0) : '') . ($extendedTagName ? $extendedTagName . chr(0) : '') . "\xFF\xFE" . mb_convert_encoding($text,"UTF-16LE","UTF-8") . chr(0) . chr(0);
                 break;
             case 'bin':
                 $text = $text;
                 break;
             case 'url':
                 $text = $text . chr(0);
-                break;
+                break;  
         }
         
         $header = [
