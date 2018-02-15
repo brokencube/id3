@@ -46,10 +46,20 @@ class Writer
     {
         // this is the data that goes into the tag
         // add in language tags at the begining and user defined tags at the end
-        list($headerName, $extendedTagName2) = $this->tagName($tagname);
+        list($headerName, $extendedTagName2, $tagtype) = $this->tagName($tagname);
         $extendedTagName = $extendedTagName ?: $extendedTagName2;
         
-        $text = chr(0) . ($lang ? $lang . chr(0) : '') . ($extendedTagName ? $extendedTagName . chr(0) : '') . $text . chr(0);
+        switch ($tagtype) {
+            case 'txt':
+                $text = chr(1) . ($lang ? $lang . chr(0) : '') . ($extendedTagName ? $extendedTagName . chr(0) : '') . "\xFF\xFE" . mb_convert_encoding($text,"UTF-16LE","UTF-8") . chr(0);
+                break;
+            case 'bin':
+                $text = $text;
+                break;
+            case 'url':
+                $text = $text . chr(0);
+                break;
+        }
         
         $header = [
             ['N', $headerName],                 // Name of the header
@@ -84,93 +94,94 @@ class Writer
 
     protected function tagName($title)
     {
+        $title = strtoupper($title);
+        
         // By default all the tiles have the TXXX code
         $validtags = [
-            'AENC', //    [[#sec4.20|Audio encryption]]
-            'APIC', //    [#sec4.15 Attached picture]
-            'COMM', //    [#sec4.11 Comments]
-            'COMR', //    [#sec4.25 Commercial frame]
-            'ENCR', //    [#sec4.26 Encryption method registration]
-            'EQUA', //    [#sec4.13 Equalization]
-            'ETCO', //    [#sec4.6 Event timing codes]
-            'GEOB', //    [#sec4.16 General encapsulated object]
-            'GRID', //    [#sec4.27 Group identification registration]
-            'IPLS', //    [#sec4.4 Involved people list]
-            'LINK', //    [#sec4.21 Linked information]
-            'MCDI', //    [#sec4.5 Music CD identifier]
-            'MLLT', //    [#sec4.7 MPEG location lookup table]
-            'OWNE', //    [#sec4.24 Ownership frame]
-            'PRIV', //    [#sec4.28 Private frame]
-            'PCNT', //    [#sec4.17 Play counter]
-            'POPM', //    [#sec4.18 Popularimeter]
-            'POSS', //    [#sec4.22 Position synchronisation frame]
-            'RBUF', //    [#sec4.19 Recommended buffer size]
-            'RVAD', //    [#sec4.12 Relative volume adjustment]
-            'RVRB', //    [#sec4.14 Reverb]
-            'SYLT', //    [#sec4.10 Synchronized lyric/text]
-            'SYTC', //    [#sec4.8 Synchronized tempo codes]
-            'TALB', //    [#TALB Album/Movie/Show title]
-            'TBPM', //    [#TBPM BPM (beats per minute)]
-            'TCOM', //    [#TCOM Composer]
-            'TCON', //    [#TCON Content type]
-            'TCOP', //    [#TCOP Copyright message]
-            'TDAT', //    [#TDAT Date]
-            'TDLY', //    [#TDLY Playlist delay]
-            'TENC', //    [#TENC Encoded by]
-            'TEXT', //    [#TEXT Lyricist/Text writer]
-            'TFLT', //    [#TFLT File type]
-            'TIME', //    [#TIME Time]
-            'TIT1', //    [#TIT1 Content group description]
-            'TIT2', //    [#TIT2 Title/songname/content description]
-            'TIT3', //    [#TIT3 Subtitle/Description refinement]
-            'TKEY', //    [#TKEY Initial key]
-            'TLAN', //    [#TLAN Language(s)]
-            'TLEN', //    [#TLEN Length]
-            'TMED', //    [#TMED Media type]
-            'TOAL', //    [#TOAL Original album/movie/show title]
-            'TOFN', //    [#TOFN Original filename]
-            'TOLY', //    [#TOLY Original lyricist(s)/text writer(s)]
-            'TOPE', //    [#TOPE Original artist(s)/performer(s)]
-            'TORY', //    [#TORY Original release year]
-            'TOWN', //    [#TOWN File owner/licensee]
-            'TPE1', //    [#TPE1 Lead performer(s)/Soloist(s)]
-            'TPE2', //    [#TPE2 Band/orchestra/accompaniment]
-            'TPE3', //    [#TPE3 Conductor/performer refinement]
-            'TPE4', //    [#TPE4 Interpreted, remixed, or otherwise modified by]
-            'TPOS', //    [#TPOS Part of a set]
-            'TPUB', //    [#TPUB Publisher]
-            'TRCK', //    [#TRCK Track number/Position in set]
-            'TRDA', //    [#TRDA Recording dates]
-            'TRSN', //    [#TRSN Internet radio station name]
-            'TRSO', //    [#TRSO Internet radio station owner]
-            'TSIZ', //    [#TSIZ Size]
-            'TSRC', //    [#TSRC ISRC (international standard recording code)]
-            'TSSE', //    [#TSEE Software/Hardware and settings used for encoding]
-            'TYER', //    [#TYER Year]
-            'TXXX', //    [#TXXX User defined text information frame]
-            'UFID', //    [#sec4.1 Unique file identifier]
-            'USER', //    [#sec4.23 Terms of use]
-            'USLT', //    [#sec4.9 Unsychronized lyric/text transcription]
-            'WCOM', //    [#WCOM Commercial information]
-            'WCOP', //    [#WCOP Copyright/Legal information]
-            'WOAF', //    [#WOAF Official audio file webpage]
-            'WOAR', //    [#WOAR Official artist/performer webpage]
-            'WOAS', //    [#WOAS Official audio source webpage]
-            'WORS', //    [#WORS Official internet radio station homepage]
-            'WPAY', //    [#WPAY Payment]
-            'WPUB', //    [#WPUB Publishers official webpage]
-            'WXXX', //    [#WXXX User defined URL link frame]
-    
-            'GRP1', // ITunes Grouping
-            'TCMP', // ITunes compilation field
+            'AENC' => 'bin', //    [[#sec4.20|Audio encryption]]
+            'APIC' => 'bin', //    [#sec4.15 Attached picture]
+            'COMM' => 'txt', //    [#sec4.11 Comments]
+            'COMR' => 'bin', //    [#sec4.25 Commercial frame]
+            'ENCR' => 'bin', //    [#sec4.26 Encryption method registration]
+            'EQUA' => 'bin', //    [#sec4.13 Equalization]
+            'ETCO' => 'bin', //    [#sec4.6 Event timing codes]
+            'GEOB' => 'bin', //    [#sec4.16 General encapsulated object]
+            'GRID' => 'bin', //    [#sec4.27 Group identification registration]
+            'IPLS' => 'bin', //    [#sec4.4 Involved people list]
+            'LINK' => 'bin', //    [#sec4.21 Linked information]
+            'MCDI' => 'bin', //    [#sec4.5 Music CD identifier]
+            'MLLT' => 'bin', //    [#sec4.7 MPEG location lookup table]
+            'OWNE' => 'bin', //    [#sec4.24 Ownership frame]
+            'PRIV' => 'bin', //    [#sec4.28 Private frame]
+            'PCNT' => 'bin', //    [#sec4.17 Play counter]
+            'POPM' => 'bin', //    [#sec4.18 Popularimeter]
+            'POSS' => 'bin', //    [#sec4.22 Position synchronisation frame]
+            'RBUF' => 'bin', //    [#sec4.19 Recommended buffer size]
+            'RVAD' => 'bin', //    [#sec4.12 Relative volume adjustment]
+            'RVRB' => 'bin', //    [#sec4.14 Reverb]
+            'SYLT' => 'bin', //    [#sec4.10 Synchronized lyric/text]
+            'SYTC' => 'bin', //    [#sec4.8 Synchronized tempo codes]
+            'TALB' => 'txt', //    [#TALB Album/Movie/Show title]
+            'TBPM' => 'txt', //    [#TBPM BPM (beats per minute)]
+            'TCOM' => 'txt', //    [#TCOM Composer]
+            'TCON' => 'txt', //    [#TCON Content type]
+            'TCOP' => 'txt', //    [#TCOP Copyright message]
+            'TDAT' => 'txt', //    [#TDAT Date]
+            'TDLY' => 'txt', //    [#TDLY Playlist delay]
+            'TENC' => 'txt', //    [#TENC Encoded by]
+            'TEXT' => 'txt', //    [#TEXT Lyricist/Text writer]
+            'TFLT' => 'txt', //    [#TFLT File type]
+            'TIME' => 'txt', //    [#TIME Time]
+            'TIT1' => 'txt', //    [#TIT1 Content group description]
+            'TIT2' => 'txt', //    [#TIT2 Title/songname/content description]
+            'TIT3' => 'txt', //    [#TIT3 Subtitle/Description refinement]
+            'TKEY' => 'txt', //    [#TKEY Initial key]
+            'TLAN' => 'txt', //    [#TLAN Language(s)]
+            'TLEN' => 'txt', //    [#TLEN Length]
+            'TMED' => 'txt', //    [#TMED Media type]
+            'TOAL' => 'txt', //    [#TOAL Original album/movie/show title]
+            'TOFN' => 'txt', //    [#TOFN Original filename]
+            'TOLY' => 'txt', //    [#TOLY Original lyricist(s)/text writer(s)]
+            'TOPE' => 'txt', //    [#TOPE Original artist(s)/performer(s)]
+            'TORY' => 'txt', //    [#TORY Original release year]
+            'TOWN' => 'txt', //    [#TOWN File owner/licensee]
+            'TPE1' => 'txt', //    [#TPE1 Lead performer(s)/Soloist(s)]
+            'TPE2' => 'txt', //    [#TPE2 Band/orchestra/accompaniment]
+            'TPE3' => 'txt', //    [#TPE3 Conductor/performer refinement]
+            'TPE4' => 'txt', //    [#TPE4 Interpreted, remixed, or otherwise modified by]
+            'TPOS' => 'txt', //    [#TPOS Part of a set]
+            'TPUB' => 'txt', //    [#TPUB Publisher]
+            'TRCK' => 'txt', //    [#TRCK Track number/Position in set]
+            'TRDA' => 'txt', //    [#TRDA Recording dates]
+            'TRSN' => 'txt', //    [#TRSN Internet radio station name]
+            'TRSO' => 'txt', //    [#TRSO Internet radio station owner]
+            'TSIZ' => 'txt', //    [#TSIZ Size]
+            'TSRC' => 'txt', //    [#TSRC ISRC (international standard recording code)]
+            'TSSE' => 'txt', //    [#TSEE Software/Hardware and settings used for encoding]
+            'TYER' => 'txt', //    [#TYER Year]
+            'TXXX' => 'txt', //    [#TXXX User defined text information frame]
+            'UFID' => 'bin', //    [#sec4.1 Unique file identifier]
+            'USER' => 'bin', //    [#sec4.23 Terms of use]
+            'USLT' => 'bin', //    [#sec4.9 Unsychronized lyric/text transcription]
+            'WCOM' => 'url', //    [#WCOM Commercial information]
+            'WCOP' => 'url', //    [#WCOP Copyright/Legal information]
+            'WOAF' => 'url', //    [#WOAF Official audio file webpage]
+            'WOAR' => 'url', //    [#WOAR Official artist/performer webpage]
+            'WOAS' => 'url', //    [#WOAS Official audio source webpage]
+            'WORS' => 'url', //    [#WORS Official internet radio station homepage]
+            'WPAY' => 'url', //    [#WPAY Payment]
+            'WPUB' => 'url', //    [#WPUB Publishers official webpage]
+            'WXXX' => 'url', //    [#WXXX User defined URL link frame]
+            'GRP1' => 'txt', // ITunes Grouping
+            'TCMP' => 'txt', // ITunes compilation field
         ];
         
-        if (in_array($title, $validtags)) {
+        if (array_key_exists($title, $validtags)) {
             list(,$value) = unpack('N', $title);
-            return [$value, null];
+            return [$value, null, $validtags[$title]];
         } else {
             list(,$value) = unpack('N', 'TXXX');
-            return [$value, $title];
+            return [$value, $title, 'txt'];
         }
     }
 
