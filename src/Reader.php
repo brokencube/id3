@@ -110,11 +110,13 @@ class Reader
                     $tagDataExtra = $this->trimNull(substr($data, 0, strpos($data, chr(0))));
                     $tagData = substr($data, strpos($data, chr(0)));
                     $tagData = $this->decodeText($tagData, $tagEncoding);
+                    $tagBinary = false;
                     break;
                 
                 case substr($tagName, 0, 1) == 'T':
                     $tagEncoding = ord(substr($data, 0, 1));
                     $tagData = $this->decodeText(substr($data, 1), $tagEncoding);
+                    $tagBinary = false;
                     break;
                 
                 case $tagName == "TXX":
@@ -123,11 +125,13 @@ class Reader
                     $tagDataExtra = $this->trimNull(substr($data, 0, strpos($data, chr(0))));
                     $tagData = substr($data, strpos($data, chr(0)));
                     $tagData = $this->decodeText($tagData, $tagEncoding);
+                    $tagBinary = false;
                     break;
                 
                 default:
                     $tagData = $data;
                     $tagLang = null;
+                    $tagBinary = true;
                     break;
             }
 
@@ -135,7 +139,8 @@ class Reader
                 'tagName' => $tagName,
                 'tagData' => $tagData,
                 'tagLang' => $tagLang,
-                'tagDataExtra' => $tagDataExtra                
+                'tagDataExtra' => $tagDataExtra,
+                'tagBinary' => $tagBinary,
             ];
             
             $pointer += (6 + $tagDataSize);
@@ -189,6 +194,7 @@ class Reader
             switch (true) {
                 case $tagName == 'APIC':
                     $tagData = $this->imageData($data);
+                    $tagBinary = true;
                     break;
 
                 case $tagName == "TXXX":
@@ -197,6 +203,7 @@ class Reader
                     $tagDataExtra = $this->trimNull(substr($data, 0, strpos($data, chr(0))));
                     $tagData = substr($data, strpos($data, chr(0)));
                     $tagData = $this->decodeText($tagData, $tagEncoding);
+                    $tagBinary = false;
                     break;
                 
                 case $tagName == "COMM":
@@ -204,16 +211,19 @@ class Reader
                     $tagEncoding = ord(substr($data, 0, 1));
                     $tagLang =  $this->trimNull(substr($data, 1, 3));
                     $tagData = $this->decodeText(substr($data, 4), $tagEncoding);
+                    $tagBinary = false;
                     break;
                 
                 case substr($tagName, 0, 1) == 'T':
                 case substr($tagName, 0, 1) == 'W':
                     $tagEncoding = ord(substr($data, 0, 1));
                     $tagData = $this->decodeText(substr($data, 1), $tagEncoding);
+                    $tagBinary = false;
                     break;
                 
                 default:
                     $tagData = $data;
+                    $tagBinary = true;
                     break;
             }
             
@@ -221,7 +231,8 @@ class Reader
                 'tagName' => $tagName,
                 'tagData' => $tagData,
                 'tagLang' => $tagLang,
-                'tagDataExtra' => $tagDataExtra
+                'tagDataExtra' => $tagDataExtra,
+                'tagBinary' => $tagBinary,
             ];
             
             $pointer += (10 + $tagDataSize);
@@ -276,6 +287,7 @@ class Reader
             switch (true) {
                 case $tagName == 'APIC':
                     $tagData = $this->imageData($data);
+                    $tagBinary = true;
                     break;
 
                 case $tagName == "TXXX":
@@ -284,6 +296,7 @@ class Reader
                     $tagDataExtra = $this->trimNull(substr($data, 0, strpos($data, chr(0))));
                     $tagData = substr($data, strpos($data, chr(0)));
                     $tagData = $this->decodeText($tagData, $tagEncoding);
+                    $tagBinary = false;
                     break;
                 
                 case $tagName == "COMM":
@@ -291,16 +304,19 @@ class Reader
                     $tagEncoding = ord(substr($data, 0, 1));
                     $tagLang =  $this->trimNull(substr($data, 1, 3));
                     $tagData = $this->decodeText(substr($data, 4), $tagEncoding);
+                    $tagBinary = false;
                     break;
                 
                 case substr($tagName, 0, 1) == 'T':
                 case substr($tagName, 0, 1) == 'W':
                     $tagEncoding = ord(substr($data, 0, 1));
                     $tagData = $this->decodeText(substr($data, 1), $tagEncoding);
+                    $tagBinary = false;
                     break;
                 
                 default:
                     $tagData = $data;
+                    $tagBinary = true;
                     break;
             }
             
@@ -308,7 +324,8 @@ class Reader
                 'tagName' => $tagName,
                 'tagData' => $tagData,
                 'tagLang' => $tagLang,
-                'tagDataExtra' => $tagDataExtra
+                'tagDataExtra' => $tagDataExtra,
+                'tagBinary' => $tagBinary,
             ];
             
             $pointer += (10 + $tagDataSize);
