@@ -196,11 +196,6 @@ class Reader
             
             // Special Decoding for specific tags
             switch (true) {
-                case $tagName == 'APIC':
-                    $tag['tagData'] = $this->imageData($data);
-                    $tag['tagBinary'] = true;
-                    break;
-
                 case $tagName == "TXXX":
                     $tagEncoding = ord(substr($data, 0, 1));
                     
