@@ -57,7 +57,8 @@ class Writer
         
         switch ($tagtype) {
             case 'lang':
-                $lang = ($lang ?: 'xxx') . chr(0);
+                $lang = pack('CCC', $lang ?: 'xxx');
+                #$lang = $lang ?: 'xxx';
                 $extendedTagName = "\xFF\xFE" . mb_convert_encoding($extendedTagName, "UTF-16LE", "UTF-8") . chr(0) . chr(0);
                 $text = "\xFF\xFE" . mb_convert_encoding($text, "UTF-16LE", "UTF-8");
                 $text = chr(1) . $lang . $extendedTagName . $text;

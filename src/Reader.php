@@ -348,12 +348,13 @@ class Reader
             $text = '';
             do {
                 $nibble = substr($string, $pointer, 2);
+                var_dump($nibble, $pointer);
                 $pointer += 2;
                 if ($nibble != chr(0) . chr(0)) {
                     $text .= $nibble;
                     $nibble = null;
                 }
-                if ($pointer == $maxlength) {
+                if ($pointer >= $maxlength) {
                     return [$text, $pointer]; // Uhoh, we hit the end of the tag! Bail out with what we have so far.
                 }
             } while ($nibble === null);
