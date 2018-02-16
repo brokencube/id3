@@ -292,11 +292,6 @@ class Reader
             
             // Special Decoding for specific tags
             switch (true) {
-                case $tagName == 'APIC':
-                    $tag['tagData'] = $this->imageData($data);
-                    $tag['tagBinary'] = true;
-                    break;
-
                 case $tagName == "TXXX":
                     $tagEncoding = ord(substr($data, 0, 1));
                     
@@ -386,25 +381,6 @@ class Reader
             $data = mb_convert_encoding($data, 'UTF-8' , 'UTF-16');
         }
         return $this->trimNull($data);
-    }
-
-    protected function imageData($data)
-    {
-        // [FIXME] Clean this when I have more brain power
-        $position = 0;
-        $image['text_encoding'] = ord(substr($data, 0, 1));
-        $mime = substr($data, 1);
-        $position = stripos($mime, null);
-        $image['MIME'] = substr($mime, 0, $position);
-        $image['picture_type'] = substr($mime, $position, 1);
-        $position += 1; 
-        $description = substr($mime, $position);
-        $descPosition = stripos($description, null);
-        $image['description'] = substr($description, $position, $descPosition);
-        $image['image'] = $this->trimNull(substr($description, $descPosition));
-        #echo "<img src='data:image/jpeg;base64,".base64_encode($image['image'])."'/>";
-        return $image;
-
     }
 
     protected function unsynchroniseString($string)
