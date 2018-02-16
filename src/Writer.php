@@ -54,11 +54,9 @@ class Writer
         list($headerName, $extendedTagName2, $tagtype) = $this->tagName($tagname);
         $extendedTagName = $extendedTagName ?: $extendedTagName2;
         
-        
         switch ($tagtype) {
             case 'lang':
-                $lang = pack('CCC', $lang ?: 'xxx');
-                #$lang = $lang ?: 'xxx';
+                $lang = str_pad(substr($lang,0,3) ?: 'xxx', 3, 'x');
                 $extendedTagName = "\xFF\xFE" . mb_convert_encoding($extendedTagName, "UTF-16LE", "UTF-8") . chr(0) . chr(0);
                 $text = "\xFF\xFE" . mb_convert_encoding($text, "UTF-16LE", "UTF-8");
                 $text = chr(1) . $lang . $extendedTagName . $text;
