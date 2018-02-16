@@ -51,8 +51,9 @@ class Writer
         
         switch ($tagtype) {
             case 'txt':
+                $lang = $lang ? $lang . chr(0) : '';
                 $extendedTagName = $extendedTagName ? "\xFF\xFE" . mb_convert_encoding($extendedTagName, "UTF-16LE", "UTF-8") . chr(0) . chr(0) : '';
-                $text = "\xFF\xFE" . mb_convert_encoding($text, "UTF-16LE", "UTF-8") . chr(0) . chr(0);
+                $text = "\xFF\xFE" . mb_convert_encoding($text, "UTF-16LE", "UTF-8");
                 $text = chr(1) . $lang . $extendedTagName . $text;
                 
                 break;
@@ -60,9 +61,9 @@ class Writer
                 $text = $text;
                 break;
             case 'num':
-                $text = chr(0) . $text . chr(0);
+                $text = chr(0) . $text;
             case 'url':
-                $text = $text . chr(0);
+                $text = $text;
                 break;  
         }
         
