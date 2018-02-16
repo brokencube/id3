@@ -370,7 +370,7 @@ class Reader
                 $text .= $byte;
                 $byte = null;
             }
-            if ($pointer == $maxlength) {
+            if ($pointer >= $maxlength) {
                 return [$text, $pointer]; // Uhoh, we hit the end of the tag! Bail out with what we have so far.
             }
         } while ($byte === null);
