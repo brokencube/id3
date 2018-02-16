@@ -44,21 +44,29 @@ class Writer
 
     protected function packTextTag($tagname, $text, $lang = null, $extendedTagName = null)
     {
+        // Skip tags with no data
+        if (!strlen($text)) {
+            return '';
+        }
+        
         // this is the data that goes into the tag
         // add in language tags at the begining and user defined tags at the end
         list($headerName, $extendedTagName2, $tagtype) = $this->tagName($tagname);
         $extendedTagName = $extendedTagName ?: $extendedTagName2;
         
+        
         switch ($tagtype) {
             case 'lang':
                 $lang = ($lang ?: 'xxx') . chr(0);
-                $extendedTagName = $extendedTagName ? "\xFF\xFE" . mb_convert_encoding($extendedTagName, "UTF-16LE", "UTF-8") . chr(0) . chr(0) : '';
+                $extendedTagName = "\xFF\xFE" . mb_convert_encoding($extendedTagName, "UTF-16LE", "UTF-8") . chr(0) . chr(0);
                 $text = "\xFF\xFE" . mb_convert_encoding($text, "UTF-16LE", "UTF-8");
                 $text = chr(1) . $lang . $extendedTagName . $text;
                 break;
-            
             case 'txt':
-                $extendedTagName = $extendedTagName ? "\xFF\xFE" . mb_convert_encoding($extendedTagName, "UTF-16LE", "UTF-8") . chr(0) . chr(0) : '';
+                $text = chr(1) . "\xFF\xFE" . mb_convert_encoding($text, "UTF-16LE", "UTF-8");
+                break;
+            case 'txtx':
+                $extendedTagName = "\xFF\xFE" . mb_convert_encoding($extendedTagName, "UTF-16LE", "UTF-8") . chr(0) . chr(0);
                 $text = "\xFF\xFE" . mb_convert_encoding($text, "UTF-16LE", "UTF-8");
                 $text = chr(1) . $extendedTagName . $text;
                 break;
@@ -192,7 +200,7 @@ class Writer
             return [$value, null, $validtags[$title]];
         } else {
             list(,$value) = unpack('N', 'TXXX');
-            return [$value, $title, 'txt'];
+            return [$value, $title, 'txtx'];
         }
     }
 
