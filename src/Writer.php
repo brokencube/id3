@@ -50,12 +50,16 @@ class Writer
         $extendedTagName = $extendedTagName ?: $extendedTagName2;
         
         switch ($tagtype) {
-            case 'txt':
-                $lang = $lang ? $lang . chr(0) : '';
+            case 'lang':
+                $lang = ($lang ?: 'xxx') . chr(0);
                 $extendedTagName = $extendedTagName ? "\xFF\xFE" . mb_convert_encoding($extendedTagName, "UTF-16LE", "UTF-8") . chr(0) . chr(0) : '';
                 $text = "\xFF\xFE" . mb_convert_encoding($text, "UTF-16LE", "UTF-8");
                 $text = chr(1) . $lang . $extendedTagName . $text;
                 
+            case 'txt':
+                $extendedTagName = $extendedTagName ? "\xFF\xFE" . mb_convert_encoding($extendedTagName, "UTF-16LE", "UTF-8") . chr(0) . chr(0) : '';
+                $text = "\xFF\xFE" . mb_convert_encoding($text, "UTF-16LE", "UTF-8");
+                $text = chr(1) . $extendedTagName . $text;
                 break;
             case 'bin':
                 $text = $text;
@@ -106,7 +110,7 @@ class Writer
         $validtags = [
             'AENC' => 'bin', //    [[#sec4.20|Audio encryption]]
             'APIC' => 'bin', //    [#sec4.15 Attached picture]
-            'COMM' => 'txt', //    [#sec4.11 Comments]
+            'COMM' => 'lang', //    [#sec4.11 Comments]
             'COMR' => 'bin', //    [#sec4.25 Commercial frame]
             'ENCR' => 'bin', //    [#sec4.26 Encryption method registration]
             'EQUA' => 'bin', //    [#sec4.13 Equalization]
@@ -125,7 +129,7 @@ class Writer
             'RBUF' => 'bin', //    [#sec4.19 Recommended buffer size]
             'RVAD' => 'bin', //    [#sec4.12 Relative volume adjustment]
             'RVRB' => 'bin', //    [#sec4.14 Reverb]
-            'SYLT' => 'bin', //    [#sec4.10 Synchronized lyric/text]
+            'SYLT' => 'lang', //    [#sec4.10 Synchronized lyric/text]
             'SYTC' => 'bin', //    [#sec4.8 Synchronized tempo codes]
             'TALB' => 'txt', //    [#TALB Album/Movie/Show title]
             'TBPM' => 'num', //    [#TBPM BPM (beats per minute)]
@@ -167,8 +171,8 @@ class Writer
             'TYER' => 'num', //    [#TYER Year]
             'TXXX' => 'txt', //    [#TXXX User defined text information frame]
             'UFID' => 'bin', //    [#sec4.1 Unique file identifier]
-            'USER' => 'bin', //    [#sec4.23 Terms of use]
-            'USLT' => 'bin', //    [#sec4.9 Unsychronized lyric/text transcription]
+            'USER' => 'lang', //    [#sec4.23 Terms of use]
+            'USLT' => 'lang', //    [#sec4.9 Unsychronized lyric/text transcription]
             'WCOM' => 'url', //    [#WCOM Commercial information]
             'WCOP' => 'url', //    [#WCOP Copyright/Legal information]
             'WOAF' => 'url', //    [#WOAF Official audio file webpage]
