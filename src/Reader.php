@@ -153,14 +153,18 @@ class Reader
     {
         $tags = [];
         do {
-            $tagEncoding = null;
-            $tagDataExtra = null;
-            $tagLang = null;
-            
             fseek($this->fp, $pointer);
+
+            $tag = [
+                'tagName' => null,
+                'tagData' => null,
+                'tagLang' => null,
+                'tagDataExtra' => null,
+                'tagBinary' => null,
+            ];
             
             // Read data for next tag
-            $tagName = fread($this->fp, 4);
+            $tag['tagName'] = $tagName = fread($this->fp, 4);            
             $tagRawSize = fread($this->fp, 4);
             $tagStatusFlags = fread($this->fp, 1);
             $tagFormatFlags = fread($this->fp, 1);
@@ -193,50 +197,50 @@ class Reader
             // Special Decoding for specific tags
             switch (true) {
                 case $tagName == 'APIC':
-                    $tagData = $this->imageData($data);
-                    $tagBinary = true;
+                    $tag['tagData'] = $this->imageData($data);
+                    $tag['tagBinary'] = true;
                     break;
 
                 case $tagName == "TXXX":
                     $tagEncoding = ord(substr($data, 0, 1));
-                    $data = $this->trimNull(substr($data, 1));
-                    $tagDataExtra = $this->trimNull(substr($data, 0, strpos($data, chr(0))));
-                    $tagData = substr($data, strpos($data, chr(0)));
-                    $tagData = $this->decodeText($tagData, $tagEncoding);
-                    $tagBinary = false;
+                    
+                    [$extra, $p] = $this->terminatedString($data, 1, $tagEncoding, $tagDataSize);
+                    $text = substr($data, $p);
+                    
+                    $tag['tagDataExtra'] = $this->decodeText($extra, $tagEncoding);
+                    $tag['tagData'] = $this->decodeText($text, $tagEncoding);
+                    $tag['tagBinary'] = false;
                     break;
                 
                 case $tagName == "COMM":
                     // Remove the text encoding byte
                     $tagEncoding = ord(substr($data, 0, 1));
-                    $tagLang =  $this->trimNull(substr($data, 1, 3));
-                    $tagData = $this->decodeText(substr($data, 4), $tagEncoding);
-                    $tagBinary = false;
+                    $tag['tagLang'] = $this->trimNull(substr($data, 1, 3));
+                    [$extra, $p] = $this->terminatedString($data, 4, $tagEncoding, $tagDataSize);
+                    $text = substr($data, $p);
+
+                    $tag['tagDataExtra'] = $this->decodeText($extra, $tagEncoding);
+                    $tag['tagData'] = $this->decodeText($text, $tagEncoding);
+                    $tag['tagBinary'] = false;
                     break;
                 
                 case substr($tagName, 0, 1) == 'T':
                 case substr($tagName, 0, 1) == 'W':
                     $tagEncoding = ord(substr($data, 0, 1));
-                    $tagData = $this->decodeText(substr($data, 1), $tagEncoding);
-                    $tagBinary = false;
+                    $text = substr($data, 1);
+
+                    $tag['tagData'] = $this->decodeText($text, $tagEncoding);
+                    $tag['tagBinary'] = false;
                     break;
                 
                 default:
-                    $tagData = $data;
-                    $tagBinary = true;
+                    $tag['tagData'] = $data;
+                    $tag['tagBinary'] = true;
                     break;
             }
             
-            $tags[] = [
-                'tagName' => $tagName,
-                'tagData' => $tagData,
-                'tagLang' => $tagLang,
-                'tagDataExtra' => $tagDataExtra,
-                'tagBinary' => $tagBinary,
-            ];
-            
+            $tags[] = $tag;
             $pointer += (10 + $tagDataSize);
-            
         } while ($pointer < $length);
         return $tags;
     }
@@ -295,6 +299,7 @@ class Reader
 
                 case $tagName == "TXXX":
                     $tagEncoding = ord(substr($data, 0, 1));
+                    
                     [$extra, $p] = $this->terminatedString($data, 1, $tagEncoding, $tagDataSize);
                     $text = substr($data, $p);
                     
@@ -342,7 +347,7 @@ class Reader
         if ($encoding === 1) {
             $text = '';
             do {
-                $nibble = substr($string, $pointer, $pointer + 2);
+                $nibble = substr($string, $pointer, 2);
                 $pointer += 2;
                 if ($nibble != chr(0) . chr(0)) {
                     $text .= $nibble;
@@ -358,7 +363,7 @@ class Reader
         // UTF8 or Latin1
         $text = '';
         do {
-            $byte = substr($string, $pointer, $pointer + 1);
+            $byte = substr($string, $pointer, 1);
             $pointer += 1;
             if ($byte != chr(0)) {
                 $text .= $byte;
