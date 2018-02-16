@@ -51,7 +51,7 @@ class Writer
         
         switch ($tagtype) {
             case 'txt':
-                $extendedTagName = "\xFF\xFE" . mb_convert_encoding($extendedTagName, "UTF-16LE", "UTF-8") . chr(0) . chr(0);
+                $extendedTagName = $extendedTagName ? "\xFF\xFE" . mb_convert_encoding($extendedTagName, "UTF-16LE", "UTF-8") . chr(0) . chr(0) : '';
                 $text = "\xFF\xFE" . mb_convert_encoding($text, "UTF-16LE", "UTF-8") . chr(0) . chr(0);
                 $text = chr(1) . $lang . $extendedTagName . $text;
                 
@@ -59,6 +59,8 @@ class Writer
             case 'bin':
                 $text = $text;
                 break;
+            case 'num':
+                $text = chr(0) . $text . chr(0);
             case 'url':
                 $text = $text . chr(0);
                 break;  
@@ -125,22 +127,22 @@ class Writer
             'SYLT' => 'bin', //    [#sec4.10 Synchronized lyric/text]
             'SYTC' => 'bin', //    [#sec4.8 Synchronized tempo codes]
             'TALB' => 'txt', //    [#TALB Album/Movie/Show title]
-            'TBPM' => 'txt', //    [#TBPM BPM (beats per minute)]
+            'TBPM' => 'num', //    [#TBPM BPM (beats per minute)]
             'TCOM' => 'txt', //    [#TCOM Composer]
             'TCON' => 'txt', //    [#TCON Content type]
             'TCOP' => 'txt', //    [#TCOP Copyright message]
-            'TDAT' => 'txt', //    [#TDAT Date]
-            'TDLY' => 'txt', //    [#TDLY Playlist delay]
+            'TDAT' => 'num', //    [#TDAT Date]
+            'TDLY' => 'num', //    [#TDLY Playlist delay]
             'TENC' => 'txt', //    [#TENC Encoded by]
             'TEXT' => 'txt', //    [#TEXT Lyricist/Text writer]
             'TFLT' => 'txt', //    [#TFLT File type]
-            'TIME' => 'txt', //    [#TIME Time]
+            'TIME' => 'num', //    [#TIME Time]
             'TIT1' => 'txt', //    [#TIT1 Content group description]
             'TIT2' => 'txt', //    [#TIT2 Title/songname/content description]
             'TIT3' => 'txt', //    [#TIT3 Subtitle/Description refinement]
             'TKEY' => 'txt', //    [#TKEY Initial key]
             'TLAN' => 'txt', //    [#TLAN Language(s)]
-            'TLEN' => 'txt', //    [#TLEN Length]
+            'TLEN' => 'num', //    [#TLEN Length]
             'TMED' => 'txt', //    [#TMED Media type]
             'TOAL' => 'txt', //    [#TOAL Original album/movie/show title]
             'TOFN' => 'txt', //    [#TOFN Original filename]
@@ -152,16 +154,16 @@ class Writer
             'TPE2' => 'txt', //    [#TPE2 Band/orchestra/accompaniment]
             'TPE3' => 'txt', //    [#TPE3 Conductor/performer refinement]
             'TPE4' => 'txt', //    [#TPE4 Interpreted, remixed, or otherwise modified by]
-            'TPOS' => 'txt', //    [#TPOS Part of a set]
+            'TPOS' => 'num', //    [#TPOS Part of a set]
             'TPUB' => 'txt', //    [#TPUB Publisher]
-            'TRCK' => 'txt', //    [#TRCK Track number/Position in set]
+            'TRCK' => 'num', //    [#TRCK Track number/Position in set]
             'TRDA' => 'txt', //    [#TRDA Recording dates]
             'TRSN' => 'txt', //    [#TRSN Internet radio station name]
             'TRSO' => 'txt', //    [#TRSO Internet radio station owner]
-            'TSIZ' => 'txt', //    [#TSIZ Size]
+            'TSIZ' => 'num', //    [#TSIZ Size]
             'TSRC' => 'txt', //    [#TSRC ISRC (international standard recording code)]
             'TSSE' => 'txt', //    [#TSEE Software/Hardware and settings used for encoding]
-            'TYER' => 'txt', //    [#TYER Year]
+            'TYER' => 'num', //    [#TYER Year]
             'TXXX' => 'txt', //    [#TXXX User defined text information frame]
             'UFID' => 'bin', //    [#sec4.1 Unique file identifier]
             'USER' => 'bin', //    [#sec4.23 Terms of use]
