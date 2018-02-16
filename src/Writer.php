@@ -178,7 +178,7 @@ class Writer
             'TSRC' => 'txt', //    [#TSRC ISRC (international standard recording code)]
             'TSSE' => 'txt', //    [#TSEE Software/Hardware and settings used for encoding]
             'TYER' => 'num', //    [#TYER Year]
-            'TXXX' => 'txt', //    [#TXXX User defined text information frame]
+            'TXXX' => 'txtx', //    [#TXXX User defined text information frame]
             'UFID' => 'bin', //    [#sec4.1 Unique file identifier]
             'USER' => 'lang', //    [#sec4.23 Terms of use]
             'USLT' => 'lang', //    [#sec4.9 Unsychronized lyric/text transcription]
